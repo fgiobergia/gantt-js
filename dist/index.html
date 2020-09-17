@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script src="timeline.js"></script>
+    <script src="bundle.js"></script>
     <style>
         
         rect.bar:hover {
@@ -11,9 +11,17 @@
             display: none;
         }
 
-        rect.bar:hover + g.popup {
+        text, .popuprect {
+            pointer-events: none;
+        }
+
+        g.visible {
             display: inline;
         }
+
+        /* rect.bar:hover + g.popup {
+            display: inline;
+        } */
 
         /* #hidden {
             display: none;

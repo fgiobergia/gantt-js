@@ -2,7 +2,7 @@
   "name": "gantt",
   "version": "1.0.0",
   "description": "",
-  "main": "webpack.config.js",
+  "private": true,
   "dependencies": {},
   "devDependencies": {
     "install": "^0.13.0",
