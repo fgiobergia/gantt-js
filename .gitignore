@@ -2,5 +2,4 @@
 entries.ts
 entries.js
 node_modules
-dist/*
-dist
+dist/*.js
