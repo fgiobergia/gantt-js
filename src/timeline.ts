@@ -79,7 +79,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
     const fromYear = Math.min(...sortedEntries.map(e => e.from.getFullYear()));
     const toYear = Math.max(...sortedEntries.map(e => dateOrNow(e.to).getFullYear()));
 
-    const totYears = toYear - fromYear;
+    const totYears = toYear - fromYear -;
     const distAllYears = svgWidth / totYears;
 
     // if distAllYears > estimatedPixelsPerYear, then 
@@ -107,10 +107,11 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
      * Create rectangles (one for each entry)
      */
     const rects = sortedEntries.map((e,k) => {
+        
+        // Bar (length defined by the duration of the activity)
         const x = getXFromEntry(e, from, to, svgWidth);
         const y = k * rowHeight + yOffset;
         const width = getWidthFromEntry(e, from, to, svgWidth);
-
         const rectBar = document.createElementNS(svgNS, "rect");
         rectBar.classList.add("bar");
         rectBar.setAttribute("fill", rectColor);
@@ -122,11 +123,10 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         rectBar.setAttribute("rx", `${rectRadius}`);
         rectBar.setAttribute("ry", `${rectRadius}`);
 
+        // Popup (containing additional info, shows on hover)
         const rectPopup = document.createElementNS(svgNS, "rect");
         rectPopup.classList.add("popuprect")
-        
         const hRect = y + rectHeight + popupHeight > svgHeight ? svgHeight - popupHeight : y + rectHeight;
-        // rectPopup.classList.add("popup");
         rectPopup.setAttribute("fill", popupColor);
         rectPopup.setAttribute("opacity", ".7");
         rectPopup.setAttribute("width", `${popupWidth}`);
@@ -136,6 +136,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         rectPopup.setAttribute("rx", `${rectRadius}`);
         rectPopup.setAttribute("ry", `${rectRadius}`);
         
+        // groups the text (for easier manipulation later on)
         const g = document.createElementNS(svgNS, "g");
         
         // title of the popup
@@ -149,7 +150,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         
         textTitle.textContent = e.title;
 
-        // from-when row of popup
+        // "institution" row of popup
         const h1 = h0 + popupMargin;
         const textInstitution = document.createElementNS(svgNS, "text");
         textInstitution.setAttribute("x", `${x+xOffset}`);
@@ -159,7 +160,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         textInstitution.setAttribute("font-size", "16");
         textInstitution.setAttribute("font-style", "italic");
 
-        // from-when row of popup
+        // "from-to" row of popup
         const h2 = h1 + popupMargin;
         const textDuration = document.createElementNS(svgNS, "text");
         textDuration.setAttribute("x", `${x+xOffset}`);
@@ -168,7 +169,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         textDuration.setAttribute("font-family", "Optima");
         textDuration.setAttribute("font-size", "13");
         
-        // from-when row of popup
+        // "location" row of popup
         const h3 = h2 + popupMargin;
         const textLocation = document.createElementNS(svgNS, "text");
         textLocation.setAttribute("x", `${x+xOffset}`);
@@ -181,10 +182,6 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
 
 
         return [rectBar, g];
-    // final reduction needed to flatten
-    // the result of map (multiple rects
-    // are returned). the flat() function
-    // is in es2019, but not widely supported
     });
 
     const bars = rects.map(r => r[0]);
@@ -200,13 +197,17 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
     svg.append(...bars);
     svg.append(...gs);
 
-    /*
-     * Create popups (&& hide them!) 
-     */
+    // add svg image to the "container" div
+    // (we need to display that here,
+    // otherwise the width of each <text>
+    // will remain to 0!)
+    // TODO: remove hardcoded container id
     document.getElementById("container").appendChild(svg);
 
     gs.map(g => {
         const [ rect, ...texts ] = [...g.children];
+        // define the width of each popup as the length
+        // of the longest text contained within (plus some margin, `xOffset`)
         const maxWidth = Math.round(Math.max(...texts.map((el: SVGGraphicsElement) => el.getBBox().width)));
         const popupWidth = maxWidth + 2 * xOffset;
         rect.setAttribute("width", `${popupWidth}`);
@@ -214,7 +215,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         rect.setAttribute("x", `${x}`);
         texts.forEach(t => t.setAttribute("x", `${x+xOffset}`));
 
-        g.classList.add("popup");
+        g.classList.add("popup"); // add the `popup` class here, to make it invisible (see comment below)
     });
 
     // Apparently, <text>s are only given a size
