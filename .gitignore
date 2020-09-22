@@ -1,4 +1,7 @@
+.DS_Store
 entries.ts
 entries.js
 node_modules
 package-lock.json
+dist/*
+dist
