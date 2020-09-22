@@ -79,7 +79,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
     const fromYear = Math.min(...sortedEntries.map(e => e.from.getFullYear()));
     const toYear = Math.max(...sortedEntries.map(e => dateOrNow(e.to).getFullYear()));
 
-    const totYears = toYear - fromYear -;
+    const totYears = toYear - fromYear;
     const distAllYears = svgWidth / totYears;
 
     // if distAllYears > estimatedPixelsPerYear, then 
