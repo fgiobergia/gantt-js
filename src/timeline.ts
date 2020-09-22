@@ -53,6 +53,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
     const popupMargin = 25;
     const popupHeight = 120;
     const popupWidth = 300;
+    const estimatedPixelsPerYear = 50;
 
     svg.setAttribute("width", `${svgWidth}`);
     svg.setAttribute("height", `${svgHeight}`);
@@ -74,12 +75,37 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         return rect;
     }));
 
-    
+    // Write the years (on bottom-most row)
+    const fromYear = Math.min(...sortedEntries.map(e => e.from.getFullYear()));
+    const toYear = Math.max(...sortedEntries.map(e => dateOrNow(e.to).getFullYear()));
+
+    const totYears = toYear - fromYear;
+    const distAllYears = svgWidth / totYears;
+
+    // if distAllYears > estimatedPixelsPerYear, then 
+    // including all years introduces a distance among
+    // labels that is larger than that estimated as "minimum"
+    // in that case, use `distAllYears` -- otherwise, estimatedPixelsPerYear
+    const distance = distAllYears > estimatedPixelsPerYear ? distAllYears : estimatedPixelsPerYear;
+    const timeDist = distance * (to.getTime() - from.getTime()) / svgWidth;
+
+    for (let i = from, dist = 0 ; i.getTime() <= to.getTime(); ) {
+        const text = document.createElementNS(svgNS, "text");
+        text.textContent = `${i.getFullYear()}`;
+        text.setAttribute("x", `${dist}`);
+        text.setAttribute("y", `${rowHeight * (sortedEntries.length)+20}`);
+        text.setAttribute("font-family", "Optima");
+        text.setAttribute("font-size", "13");
+        
+
+        dist += distance;
+        i = new Date(i.getTime() + timeDist);
+        svg.append(text);
+    }
 
     /*
      * Create rectangles (one for each entry)
      */
-    // TODO: remove aaa, pass directly into svg.append(...)
     const rects = sortedEntries.map((e,k) => {
         const x = getXFromEntry(e, from, to, svgWidth);
         const y = k * rowHeight + yOffset;
@@ -189,7 +215,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         texts.forEach(t => t.setAttribute("x", `${x+xOffset}`));
 
         g.classList.add("popup");
-    })
+    });
 
     // Apparently, <text>s are only given a size
     // after being displayed -- hence, wait until
