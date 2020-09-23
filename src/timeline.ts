@@ -1,6 +1,7 @@
 
 import { Entry } from "./entry";
 import { entries } from "./entries";
+import { entry } from "../webpack.config";
 
 const now = new Date();
 
@@ -24,11 +25,62 @@ function getWidthFromEntry(target: Entry, from: Date, to: Date, width: number): 
     return getWidthFromDelta(dateOrNow(target.to).getTime() - target.from.getTime(), from, to, width);
 }
 
+function durationString(e: Entry) {
+    return `${e.from.toLocaleString("en-GB", {month: "short", year: "numeric"})} - ${dateOrNow(e.to).toLocaleString("en-GB", {month: "short", year: "numeric"})}`;
+}
+
 function dateOrNow(date: Date | null): Date {
     if (date === null) {
         return now;
     }
     return date;
+}
+function addBr(el: HTMLElement) {
+    return [el, document.createElement("br")];
+}
+
+function clearContainer(container: HTMLElement) {
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+}
+function drawMobile(entries: ReadonlyArray<Entry>) {
+    const section = document.createElement("section");
+    const sortedEntries = [...entries].sort((a,b) => a.from.getTime() - b.from.getTime());
+
+    const container = document.getElementById("container");
+    clearContainer(container);
+
+    section.append(...sortedEntries.map(entry => {
+        const article = document.createElement("article");
+
+        article.classList.add("entry");
+
+        const titleSpan = document.createElement("span");
+        titleSpan.classList.add("bold");
+        titleSpan.textContent = entry.title;
+
+        const institutionSpan = document.createElement("span");
+        institutionSpan.classList.add("italic");
+        institutionSpan.textContent = entry.institution;
+
+        const durationSpan = document.createElement("span");
+        durationSpan.classList.add("small");
+        durationSpan.textContent = durationString(entry);
+
+        const locationSpan = document.createElement("span");
+        locationSpan.classList.add("small");
+        locationSpan.textContent = entry.location;
+
+        article.append(...addBr(titleSpan),
+                       ...addBr(institutionSpan),
+                       ...addBr(durationSpan),
+                       ...addBr(locationSpan));
+
+        return article;
+    }));
+
+    container.appendChild(section);
 }
 
 function drawTimeline(entries: ReadonlyArray<Entry>) {
@@ -38,6 +90,8 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
     const svgNS = "http://www.w3.org/2000/svg";
 
     const svg: SVGSVGElement = document.createElementNS(svgNS, "svg");
+    const container = document.getElementById("container");
+    clearContainer(container);
 
     const svgWidth = 800;
     const rowHeight = 30;
@@ -165,7 +219,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
         const textDuration = document.createElementNS(svgNS, "text");
         textDuration.setAttribute("x", `${x+xOffset}`);
         textDuration.setAttribute("y", `${h2}`);
-        textDuration.textContent = `${e.from.toLocaleString("en-GB", {month: "short", year: "numeric"})} - ${dateOrNow(e.to).toLocaleString("en-GB", {month: "short", year: "numeric"})}`;
+        textDuration.textContent = durationString(e);
         textDuration.setAttribute("font-family", "Optima");
         textDuration.setAttribute("font-size", "13");
         
@@ -202,7 +256,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
     // otherwise the width of each <text>
     // will remain to 0!)
     // TODO: remove hardcoded container id
-    document.getElementById("container").appendChild(svg);
+    container.appendChild(svg);
 
     gs.map(g => {
         const [ rect, ...texts ] = [...g.children];
@@ -225,4 +279,15 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
 
 }
 
-window.onload = () => drawTimeline(entries);
+function pickDrawer() {
+    if (screen.width > 850) { // TODO: remove hardcoded value!
+        return drawTimeline;
+    }
+    else {
+        return drawMobile;
+    }
+}
+
+// window.onload = () => drawTimeline(entries);
+window.onload = () => pickDrawer()(entries);
+window.onresize = () => pickDrawer()(entries);
