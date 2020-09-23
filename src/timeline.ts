@@ -280,7 +280,7 @@ function drawTimeline(entries: ReadonlyArray<Entry>) {
 }
 
 function pickDrawer() {
-    if (screen.width > 850) { // TODO: remove hardcoded value!
+    if (window.innerWidth > 850) { // TODO: remove hardcoded value!
         return drawTimeline;
     }
     else {
@@ -288,6 +288,5 @@ function pickDrawer() {
     }
 }
 
-// window.onload = () => drawTimeline(entries);
 window.onload = () => pickDrawer()(entries);
 window.onresize = () => pickDrawer()(entries);
